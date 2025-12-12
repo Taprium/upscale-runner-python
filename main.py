@@ -44,13 +44,17 @@ def upscale():
     upscaled_file_name = '{}.png'.format(to_upscale_record.id)
     urllib.request.urlretrieve(urllib.parse.urlparse(file_url).geturl(), origin_file)
     try:
-        subprocess.run([
+        result = subprocess.run([
             "./realesrgan-ncnn-vulkan", 
             "-s", str(upscale_times),
             "-n", settings_record.upscale_model,
             "-i", origin_file, 
             "-o", upscaled_file_name
         ], check=True)
+        if result.returncode != 0:
+            raise ChildProcessError("Upscale failed.")
+        if os.path.getsize(upscaled_file_name) == os.path.getsize(origin_file):
+            raise ChildProcessError("Upscale failed.")
     except Exception as e:
         # unlock the runner
         pb.collection(PB_COLLECTION_IMAGE).update(to_upscale_record.id,body_params={

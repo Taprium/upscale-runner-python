@@ -2,12 +2,58 @@ from filelock import FileLock
 from pocketbase import PocketBase
 from pocketbase.client import FileUpload
 import os
+import socket
+import json
+import urllib.error
 import urllib.request
 import urllib.parse
 import subprocess
 
+PB_PASSWORD=''
+PB_USER=''
+
+bao_env = ['OPENBAO_ADDR', 'OPENBAO_TOKEN', 'OPENBAO_KV_PATH_PREFIX', 'OPENBAO_KV_MP']
+
+if set(bao_env).issubset(set(os.environ.keys())):
+
+    OPENBAO_ADDR = os.environ['OPENBAO_ADDR']
+    OPENBAO_TOKEN = os.environ['OPENBAO_TOKEN']
+    OPENBAO_KV_PATH_PREFIX = os.environ['OPENBAO_KV_PATH_PREFIX']
+    OPENBAO_KV_MP = os.environ['OPENBAO_KV_MP']
+    slot_id = socket.gethostname().split('.')[1]
+    url = f"{OPENBAO_ADDR}/v1/{OPENBAO_KV_MP}/data/{OPENBAO_KV_PATH_PREFIX}{slot_id}"
+    print(url)
+    # headers = {"X-Bao-Token": BAO_TOKEN}
+    
+    req = urllib.request.Request(url)
+    req.add_header("X-Vault-Token",OPENBAO_TOKEN)
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            if response.status == 200:
+                result = json.loads(response.read().decode())
+                secrets = result['data']['data']
+                PB_USER = secrets['username']
+                PB_PASSWORD = secrets['password']
+                # for key, value in secrets.items():
+                #     print(f"{key}: {value}")
+    except urllib.error.HTTPError as e:
+        if e.code == 403:
+            print("Error: Permission denied. Check your BAO_TOKEN and Policy.")
+        elif e.code == 404:
+            print(f"Error: Secret not found at {OPENBAO_KV_PATH_PREFIX}.")
+        elif e.code == 503:
+            print("Error: OpenBao is SEALED. You must unseal it first!")
+        else:
+            print(f"HTTP Error: {e.code} - {e.reason}")
+    except:
+        print("Failed to get credentials from OpenBao")
+else:
+    PB_PASSWORD=os.environ["PB_PASSWORD"]
+    PB_USER=os.environ["PB_USER"]
+
 pb = PocketBase(os.environ["PB_ADDR"])
-pb_user = pb.collection("upscale_runners").auth_with_password(os.environ["PB_USER"],os.environ["PB_PASSWORD"])
+pb_user = pb.collection("upscale_runners").auth_with_password(PB_USER,PB_PASSWORD)
 
 PB_COLLECTION_IMAGE = "generated_images"
 PB_COLLECTION_SETTINGS = "settings"

@@ -34,6 +34,6 @@ COPY *.py ./
 COPY --from=downloader /src/realesrgan-ncnn-vulkan ./
 COPY --from=downloader /src/models/* ./models/
 
-RUN rm crontab.txt && chmod +x /app/realesrgan-ncnn-vulkan
+RUN chmod +x /app/realesrgan-ncnn-vulkan
 
 ENTRYPOINT [ "python", "upscale-runner.py"]

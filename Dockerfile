@@ -30,7 +30,7 @@ RUN apk update && \
 
 RUN pip install pocketbase filelock requests schedule
 
-COPY crontab.txt *.py *.sh ./
+COPY *.py ./
 COPY --from=downloader /src/realesrgan-ncnn-vulkan ./
 COPY --from=downloader /src/models/* ./models/
 

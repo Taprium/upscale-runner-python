@@ -28,12 +28,12 @@ RUN apk update && \
     apk search -eq 'mesa-vulkan-*' | grep -v 'layers' | xargs apk add --no-cache &&\
     rm -rf /var/cache/apk/*
 
-RUN pip install pocketbase filelock
+RUN pip install pocketbase filelock requests schedule
 
 COPY crontab.txt *.py *.sh ./
 COPY --from=downloader /src/realesrgan-ncnn-vulkan ./
 COPY --from=downloader /src/models/* ./models/
 
-RUN crontab crontab.txt && touch /var/log/taprium-upscale-runner.log && rm crontab.txt && chmod +x /app/realesrgan-ncnn-vulkan
+RUN rm crontab.txt && chmod +x /app/realesrgan-ncnn-vulkan
 
-CMD [ "sh", "entrypoint.sh"]
+ENTRYPOINT [ "python", "upscale-runner.py"]

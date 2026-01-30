@@ -2,3 +2,4 @@
 venv/
 realesrgan-ncnn-vulkan
 models/
+*.png

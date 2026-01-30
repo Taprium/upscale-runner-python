@@ -1,1 +1,0 @@
-printenv > /etc/environment && crond && tail -f /var/log/taprium-upscale-runner.log
